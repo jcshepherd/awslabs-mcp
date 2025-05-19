@@ -11,6 +11,7 @@
 """Configuration module for Keyspaces MCP Server."""
 
 import os
+from .consts import CASSANDRA_DEFAULT_PORT
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
@@ -42,7 +43,7 @@ class DatabaseConfig:
         return cls(
             use_keyspaces=os.getenv('DB_USE_KEYSPACES', 'false').lower() == 'true',
             cassandra_contact_points=os.getenv('DB_CASSANDRA_CONTACT_POINTS', '127.0.0.1'),
-            cassandra_port=int(os.getenv('DB_CASSANDRA_PORT', '9042')),
+            cassandra_port=int(os.getenv('DB_CASSANDRA_PORT', CASSANDRA_DEFAULT_PORT)),
             cassandra_local_datacenter=os.getenv('DB_CASSANDRA_LOCAL_DATACENTER', 'datacenter1'),
             cassandra_username=os.getenv('DB_CASSANDRA_USERNAME', ''),
             cassandra_password=os.getenv('DB_CASSANDRA_PASSWORD', ''),

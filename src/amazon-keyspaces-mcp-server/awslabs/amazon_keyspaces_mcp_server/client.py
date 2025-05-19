@@ -18,6 +18,14 @@ through the Cassandra driver.
 import logging
 import os
 import ssl
+from .consts import (
+    CERT_DIRECTORY,
+    CERT_FILENAME,
+    CONNECTION_TIMEOUT,
+    CONTROL_CONNECTION_TIMEOUT,
+    KEYSPACES_DEFAULT_PORT,
+    PROTOCOL_VERSION,
+)
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster, Session
 
@@ -119,23 +127,23 @@ class UnifiedCassandraClient:
             )
             cluster = Cluster(
                 contact_points=[self.database_config.keyspaces_endpoint],
-                port=9142,  # Keyspaces uses port 9142
+                port=KEYSPACES_DEFAULT_PORT,
                 auth_provider=auth_provider,
                 ssl_options=ssl_options,
-                protocol_version=4,
-                control_connection_timeout=10.0,
-                connect_timeout=10.0,
+                protocol_version=PROTOCOL_VERSION,
+                control_connection_timeout=CONTROL_CONNECTION_TIMEOUT,
+                connect_timeout=CONNECTION_TIMEOUT,
             )
         else:
             # Fallback if SSLOptions is not available
             cluster = Cluster(
                 contact_points=[self.database_config.keyspaces_endpoint],
-                port=9142,  # Keyspaces uses port 9142
+                port=KEYSPACES_DEFAULT_PORT,
                 auth_provider=auth_provider,
                 ssl_context=ssl_context,
-                protocol_version=4,
-                control_connection_timeout=10.0,
-                connect_timeout=10.0,
+                protocol_version=PROTOCOL_VERSION,
+                control_connection_timeout=CONTROL_CONNECTION_TIMEOUT,
+                connect_timeout=CONNECTION_TIMEOUT,
             )
 
         cluster.connection_class = AsyncoreConnection
@@ -149,7 +157,7 @@ class UnifiedCassandraClient:
 
         # Use the local certificate file
         cert_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), 'certs', 'sf-class2-root.crt'
+            os.path.dirname(os.path.dirname(__file__)), CERT_DIRECTORY, CERT_FILENAME
         )
 
         try:

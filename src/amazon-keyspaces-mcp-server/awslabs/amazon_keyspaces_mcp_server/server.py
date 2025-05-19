@@ -15,6 +15,14 @@ import logging
 import sys
 from .client import UnifiedCassandraClient
 from .config import AppConfig
+from .consts import (
+    DEFAULT_LOG_LEVEL,
+    LOG_FORMAT,
+    MAX_DISPLAY_ROWS,
+    SERVER_NAME,
+    SERVER_VERSION,
+    UNSAFE_OPERATIONS,
+)
 from .llm_context import (
     build_keyspace_details_context,
     build_list_keyspaces_context,
@@ -30,8 +38,8 @@ from typing import Any, Dict, Optional
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=DEFAULT_LOG_LEVEL,
+    format=LOG_FORMAT,
     handlers=[logging.StreamHandler(sys.stderr)],
 )
 
@@ -51,7 +59,7 @@ class KeyspacesMcpStdioServer:
         self.data_service = data_service
         self.query_analysis_service = query_analysis_service
         self.schema_service = schema_service
-        self.server = FastMCP(name='keyspaces-mcp', version='0.1.0')
+        self.server = FastMCP(name=SERVER_NAME, version=SERVER_VERSION)
 
         # Register all tools
         self._register_tools()
@@ -171,15 +179,7 @@ class KeyspacesMcpStdioServer:
                     f'Adding contextual information about tables in keyspace {keyspace_name}'
                 )
                 formatted_text += build_list_tables_context(keyspace_name, tables)
-                # formatted_text += "\n\n## About Tables in Cassandra/Keyspaces\n\n"
-                # formatted_text += "In Cassandra and Amazon Keyspaces, tables are containers for related data, similar to tables in relational databases. "
-                # formatted_text += "However, Cassandra tables are optimized for specific access patterns based on their primary key design. "
-                # formatted_text += "Tables consist of rows and columns, where each row is uniquely identified by a primary key.\n\n"
-                # formatted_text += "The primary key determines how data is distributed across the cluster and how it can be efficiently queried. "
-                # formatted_text += "It consists of a partition key (which determines data distribution) and optional clustering columns "
-                # formatted_text += "(which determine data ordering within a partition)."
 
-            # Return just the formatted text as a string
             return formatted_text
         except Exception as e:
             logger.error(f'Error listing tables: {str(e)}')
@@ -222,20 +222,7 @@ class KeyspacesMcpStdioServer:
             if ctx:
                 await ctx.info('Adding contextual information about replication strategies')
                 formatted_text += build_keyspace_details_context(keyspace_details)
-                # formatted_text += "\n\n## About Replication Strategies\n\n"
-                # formatted_text += "### SimpleStrategy\n"
-                # formatted_text += "SimpleStrategy places replicas on consecutive nodes in the ring, starting with the node that owns the data. "
-                # formatted_text += "This strategy is suitable for a single datacenter deployment only.\n\n"
 
-                # formatted_text += "### NetworkTopologyStrategy\n"
-                # formatted_text += "NetworkTopologyStrategy allows you to specify how many replicas you want in each datacenter. "
-                # formatted_text += "This strategy is recommended for production deployments as it's more flexible and allows for multi-datacenter deployments.\n\n"
-
-                # formatted_text += "### Durable Writes\n"
-                # formatted_text += "When durable_writes is true, data is written to the commit log for crash recovery purposes. "
-                # formatted_text += "If set to false, data is not written to the commit log, which can improve performance but risks data loss if a node crashes."
-
-            # Return just the formatted text as a string
             return formatted_text
         except Exception as e:
             logger.error(f'Error describing keyspace: {str(e)}')
@@ -306,26 +293,7 @@ class KeyspacesMcpStdioServer:
                     'Adding contextual information about Cassandra data types and primary keys'
                 )
                 formatted_text += build_table_details_context(table_details)
-                # formatted_text += "\n\n## About Cassandra Data Types and Primary Keys\n\n"
 
-                # formatted_text += "### Common Data Types\n\n"
-                # formatted_text += "- **text/varchar**: UTF-8 encoded string\n"
-                # formatted_text += "- **int/bigint**: 32-bit/64-bit signed integer\n"
-                # formatted_text += "- **float/double**: 32-bit/64-bit floating point number\n"
-                # formatted_text += "- **boolean**: true or false\n"
-                # formatted_text += "- **uuid/timeuuid**: Universally unique identifier\n"
-                # formatted_text += "- **timestamp**: Date and time with millisecond precision\n"
-                # formatted_text += "- **blob**: Arbitrary bytes\n"
-                # formatted_text += "- **collection types**: list, set, map\n\n"
-
-                # formatted_text += "### Primary Key Structure\n\n"
-                # formatted_text += "The primary key in Cassandra consists of:\n\n"
-                # formatted_text += "1. **Partition Key**: Determines how data is distributed across the cluster. Queries are most efficient when they include the partition key.\n"
-                # formatted_text += "2. **Clustering Columns**: Optional columns that determine the sort order of rows within a partition. They enable range queries within a partition.\n\n"
-
-                # formatted_text += "Efficient queries in Cassandra should always include the partition key. Including clustering columns allows for more specific queries."
-
-            # Return just the formatted text as a string
             return formatted_text
         except Exception as e:
             logger.error(f'Error describing table: {str(e)}')
@@ -351,18 +319,7 @@ class KeyspacesMcpStdioServer:
                 raise Exception('Only SELECT queries are allowed for read-only execution')
 
             # Check for any modifications that might be disguised as SELECT
-            if any(
-                op in trimmed_query
-                for op in [
-                    'insert ',
-                    'update ',
-                    'delete ',
-                    'drop ',
-                    'truncate ',
-                    'create ',
-                    'alter ',
-                ]
-            ):
+            if any(op in trimmed_query for op in UNSAFE_OPERATIONS):
                 raise Exception('Query contains potentially unsafe operations')
 
             # Execute the query using the DataService
@@ -386,8 +343,8 @@ class KeyspacesMcpStdioServer:
                 # Separator row
                 formatted_text += '| ' + ' | '.join(['---'] * len(columns)) + ' |\n'
 
-                # Data rows (limit to first 20 rows for readability)
-                display_limit = min(len(rows), 20)
+                # Data rows (limit to first few rows for readability)
+                display_limit = min(len(rows), MAX_DISPLAY_ROWS)
                 for i in range(display_limit):
                     row = rows[i]
                     row_values = []
@@ -406,21 +363,7 @@ class KeyspacesMcpStdioServer:
             if ctx:
                 await ctx.info('Adding contextual information about CQL queries')
                 formatted_text += build_query_result_context(query_results)
-                # formatted_text += "\n\n## About CQL Queries\n\n"
-                # formatted_text += "CQL (Cassandra Query Language) is a SQL-like language for interacting with Cassandra and Amazon Keyspaces. "
-                # formatted_text += "While it looks similar to SQL, there are important differences:\n\n"
 
-                # formatted_text += "1. **No JOINs**: Cassandra doesn't support joins between tables. Data should be denormalized.\n"
-                # formatted_text += "2. **Primary Key Importance**: Efficient queries should include the partition key.\n"
-                # formatted_text += "3. **No GROUP BY**: Traditional aggregations are limited. Use materialized views or client-side aggregation.\n"
-                # formatted_text += "4. **ALLOW FILTERING**: This clause allows inefficient queries but should be avoided in production.\n\n"
-
-                # formatted_text += "Common CQL query patterns:\n"
-                # formatted_text += "- `SELECT * FROM table WHERE partition_key = value`\n"
-                # formatted_text += "- `SELECT * FROM table WHERE partition_key = value AND clustering_column > value2`\n"
-                # formatted_text += "- `SELECT * FROM table WHERE partition_key IN (value1, value2)`\n"
-
-            # Return just the formatted text as a string
             return formatted_text
         except ValueError as e:
             # This is thrown for non-SELECT queries
@@ -464,26 +407,7 @@ class KeyspacesMcpStdioServer:
                     'Adding contextual information about query performance in Cassandra'
                 )
                 formatted_text += build_query_analysis_context(analysis_result)
-                # formatted_text += "\n\n## About Query Performance in Cassandra\n\n"
-                # formatted_text += "### Key Performance Factors\n\n"
-                # formatted_text += "1. **Partition Key Usage**: Queries that specify the partition key are most efficient as they directly target specific nodes.\n"
-                # formatted_text += "2. **ALLOW FILTERING**: This clause allows queries that don't use the partition key but can cause significant performance issues on large tables.\n"
-                # formatted_text += "3. **Secondary Indexes**: While useful for querying on non-primary key columns, they add overhead and don't perform well on high-cardinality columns.\n"
-                # formatted_text += "4. **Materialized Views**: Can improve read performance by pre-computing alternative access patterns.\n\n"
 
-                # formatted_text += "### Common Performance Issues\n\n"
-                # formatted_text += "- **Full Table Scans**: Queries without partition keys may scan the entire table.\n"
-                # formatted_text += "- **Large Partitions**: Partitions with too many rows can cause performance problems.\n"
-                # formatted_text += "- **Too Many Tombstones**: Deleted data creates tombstones that can degrade read performance.\n"
-                # formatted_text += "- **Inefficient Data Model**: Poor schema design can lead to inefficient queries.\n\n"
-
-                # formatted_text += "### Best Practices\n\n"
-                # formatted_text += "- Design tables around specific query patterns.\n"
-                # formatted_text += "- Use the partition key in all queries when possible.\n"
-                # formatted_text += "- Limit the size of result sets with LIMIT clauses.\n"
-                # formatted_text += "- Consider denormalizing data to avoid the need for joins.\n"
-
-            # Return just the formatted text as a string
             return formatted_text
         except Exception as e:
             logger.error(f'Error analyzing query: {str(e)}')
