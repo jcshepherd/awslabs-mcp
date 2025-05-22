@@ -417,7 +417,7 @@ A server for Aurora Postgres.
 
 [Learn more](src/postgres-mcp-server/README.md) | [Documentation](https://awslabs.github.io/mcp/servers/postgres-mcp-server/)
 
-### Amazon Keyspaces MCP Server1
+### Amazon Keyspaces MCP Server
 
 [![PyPI version](https://img.shields.io/pypi/v/awslabs.amazon-keyspaces-mcp-server.svg)](https://pypi.org/project/awslabs.amazon-keyspaces-mcp-server/)
 
