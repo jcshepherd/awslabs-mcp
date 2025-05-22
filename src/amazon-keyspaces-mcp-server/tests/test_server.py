@@ -14,7 +14,7 @@ from awslabs.amazon_keyspaces_mcp_server.server import (
     list_tables,
 )
 from mcp.server.fastmcp import Context
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 
 class TestServerTools(unittest.TestCase):
@@ -197,7 +197,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.server = KeyspacesMcpStdioServer(
             self.mock_data_service, self.mock_query_analysis_service, self.mock_schema_service
         )
-        self.mock_context = Mock(spec=Context)
+        self.mock_context = AsyncMock(spec=Context)
 
     def test_handle_list_keyspaces(self):
         """Test the handle_list_keyspaces method."""

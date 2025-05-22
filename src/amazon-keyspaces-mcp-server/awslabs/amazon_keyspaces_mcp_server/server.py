@@ -44,7 +44,11 @@ mcp = FastMCP(name=SERVER_NAME, version=SERVER_VERSION)
 _proxy = None
 
 
-def __get_proxy():
+def get_proxy():
+    """Returns a singleton instance of the main Keyspaces MCP server implementation.
+
+    The singleton is initialized lazily.
+    """
     global _proxy
     if _proxy is None:
         # Load configuration
@@ -69,7 +73,7 @@ def __get_proxy():
 )
 def list_keyspaces(args: Dict[str, Any] = None, ctx: Context = None) -> str:
     """Lists all keyspaces in the Cassandra/Keyspaces database."""
-    return __get_proxy().handle_list_keyspaces(args or {}, ctx)
+    return get_proxy().handle_list_keyspaces(args or {}, ctx)
 
 
 @mcp.tool(
@@ -80,7 +84,7 @@ def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
     """Lists all tables in a specified keyspace."""
     if 'keyspace' not in args:
         raise ValueError('Missing required parameter: keyspace')
-    return __get_proxy()._handle_list_tables(args, ctx)
+    return get_proxy()._handle_list_tables(args, ctx)
 
 
 @mcp.tool(
@@ -91,7 +95,7 @@ def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
     """Gets detailed information about a keyspace."""
     if 'keyspace' not in args:
         raise ValueError('Missing required parameter: keyspace')
-    return __get_proxy()._handle_describe_keyspace(args, ctx)
+    return get_proxy()._handle_describe_keyspace(args, ctx)
 
 
 @mcp.tool(
@@ -104,7 +108,7 @@ def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
         raise ValueError('Missing required parameter: keyspace')
     if 'table' not in args:
         raise ValueError('Missing required parameter: table')
-    return __get_proxy()._handle_describe_table(args, ctx)
+    return get_proxy()._handle_describe_table(args, ctx)
 
 
 @mcp.tool(
@@ -117,7 +121,7 @@ def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
         raise ValueError('Missing required parameter: keyspace')
     if 'query' not in args:
         raise ValueError('Missing required parameter: query')
-    return __get_proxy()._handle_execute_query(args, ctx)
+    return get_proxy()._handle_execute_query(args, ctx)
 
 
 @mcp.tool(
@@ -130,7 +134,7 @@ def analyze_query_performance(args: Dict[str, Any], ctx: Context = None) -> str:
         raise ValueError('Missing required parameter: keyspace')
     if 'query' not in args:
         raise ValueError('Missing required parameter: query')
-    return __get_proxy()._handle_analyze_query_performance(args, ctx)
+    return get_proxy()._handle_analyze_query_performance(args, ctx)
 
 
 class KeyspacesMcpStdioServer:
