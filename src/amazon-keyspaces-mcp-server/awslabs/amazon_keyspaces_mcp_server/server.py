@@ -10,14 +10,11 @@
 # and limitations under the License.
 """awslabs MCP Server implementation for Amazon Keyspaces (for Apache Cassandra)."""
 
-import asyncio
-import logging
+import argparse
 import sys
 from .client import UnifiedCassandraClient
 from .config import AppConfig
 from .consts import (
-    DEFAULT_LOG_LEVEL,
-    LOG_FORMAT,
     MAX_DISPLAY_ROWS,
     SERVER_NAME,
     SERVER_VERSION,
@@ -32,18 +29,108 @@ from .llm_context import (
     build_table_details_context,
 )
 from .services import DataService, QueryAnalysisService, SchemaService
+from loguru import logger
 from mcp.server.fastmcp import Context, FastMCP
 from typing import Any, Dict, Optional
 
 
-# Configure logging
-logging.basicConfig(
-    level=DEFAULT_LOG_LEVEL,
-    format=LOG_FORMAT,
-    handlers=[logging.StreamHandler(sys.stderr)],
-)
+# Remove all default handlers then add our own
+logger.remove()
+logger.add(sys.stderr, level='INFO')
 
-logger = logging.getLogger(__name__)
+mcp = FastMCP(name=SERVER_NAME, version=SERVER_VERSION)
+
+# Global handle to hold the proxy to the specific db client
+_proxy = None
+
+
+def __get_proxy():
+    global _proxy
+    if _proxy is None:
+        # Load configuration
+        app_config = AppConfig.from_env()
+
+        # Initialize client
+        cassandra_client = UnifiedCassandraClient(app_config.database_config)
+
+        # Initialize services
+        data_service = DataService(cassandra_client)
+        schema_service = SchemaService(cassandra_client)
+        query_analysis_service = QueryAnalysisService(cassandra_client, schema_service)
+
+        _proxy = KeyspacesMcpStdioServer(data_service, query_analysis_service, schema_service)
+
+    return _proxy
+
+
+@mcp.tool(
+    name='listKeyspaces',
+    description='Lists all keyspaces in the Cassandra/Keyspaces database - args: none',
+)
+def list_keyspaces(args: Dict[str, Any] = None, ctx: Context = None) -> str:
+    """Lists all keyspaces in the Cassandra/Keyspaces database."""
+    return __get_proxy().handle_list_keyspaces(args or {}, ctx)
+
+
+@mcp.tool(
+    name='listTables',
+    description='Lists all tables in a specified keyspace - args: keyspace',
+)
+def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
+    """Lists all tables in a specified keyspace."""
+    if 'keyspace' not in args:
+        raise ValueError('Missing required parameter: keyspace')
+    return __get_proxy()._handle_list_tables(args, ctx)
+
+
+@mcp.tool(
+    name='describeKeyspace',
+    description='Gets detailed information about a keyspace - args: keyspace',
+)
+def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
+    """Gets detailed information about a keyspace."""
+    if 'keyspace' not in args:
+        raise ValueError('Missing required parameter: keyspace')
+    return __get_proxy()._handle_describe_keyspace(args, ctx)
+
+
+@mcp.tool(
+    name='describeTable',
+    description='Gets detailed information about a table - args: keyspace, table',
+)
+def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
+    """Gets detailed information about a table."""
+    if 'keyspace' not in args:
+        raise ValueError('Missing required parameter: keyspace')
+    if 'table' not in args:
+        raise ValueError('Missing required parameter: table')
+    return __get_proxy()._handle_describe_table(args, ctx)
+
+
+@mcp.tool(
+    name='executeQuery',
+    description='Executes a read-only SELECT query against the database - args: keyspace, query',
+)
+def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
+    """Executes a read-only (SELECT) query against the database."""
+    if 'keyspace' not in args:
+        raise ValueError('Missing required parameter: keyspace')
+    if 'query' not in args:
+        raise ValueError('Missing required parameter: query')
+    return __get_proxy()._handle_execute_query(args, ctx)
+
+
+@mcp.tool(
+    name='analyzeQueryPerformance',
+    description='Analyzes the performance characteristics of a CQL query - args: keyspace, query',
+)
+def analyze_query_performance(args: Dict[str, Any], ctx: Context = None) -> str:
+    """Analyzes the performance characteristics of a CQL query."""
+    if 'keyspace' not in args:
+        raise ValueError('Missing required parameter: keyspace')
+    if 'query' not in args:
+        raise ValueError('Missing required parameter: query')
+    return __get_proxy()._handle_analyze_query_performance(args, ctx)
 
 
 class KeyspacesMcpStdioServer:
@@ -59,76 +146,8 @@ class KeyspacesMcpStdioServer:
         self.data_service = data_service
         self.query_analysis_service = query_analysis_service
         self.schema_service = schema_service
-        self.server = FastMCP(name=SERVER_NAME, version=SERVER_VERSION)
 
-        # Register all tools
-        self._register_tools()
-
-    def _register_tools(self) -> None:
-        """Register all tools with the MCP server."""
-
-        # Register listKeyspaces tool
-        @self.server.tool(
-            name='listKeyspaces',
-            description='Lists all keyspaces in the Cassandra/Keyspaces database - args: none',
-        )
-        async def list_keyspaces(args: Dict[str, Any] = None, ctx: Context = None) -> str:
-            return await self._handle_list_keyspaces(args or {}, ctx)
-
-        @self.server.tool(
-            name='listTables',
-            description='Lists all tables in a specified keyspace - args: keyspace',
-        )
-        async def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
-            if 'keyspace' not in args:
-                raise ValueError('Missing required parameter: keyspace')
-            return await self._handle_list_tables(args, ctx)
-
-        @self.server.tool(
-            name='describeKeyspace',
-            description='Gets detailed information about a keyspace - args: keyspace',
-        )
-        async def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
-            if 'keyspace' not in args:
-                raise ValueError('Missing required parameter: keyspace')
-            return await self._handle_describe_keyspace(args, ctx)
-
-        @self.server.tool(
-            name='describeTable',
-            description='Gets detailed information about a table - args: keyspace, table',
-        )
-        async def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
-            if 'keyspace' not in args:
-                raise ValueError('Missing required parameter: keyspace')
-            if 'table' not in args:
-                raise ValueError('Missing required parameter: table')
-            return await self._handle_describe_table(args, ctx)
-
-        @self.server.tool(
-            name='executeQuery',
-            description='Executes a read-only SELECT query against the database - args: keyspace, query',
-        )
-        async def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
-            # Validate required parameters
-            if 'keyspace' not in args:
-                raise ValueError('Missing required parameter: keyspace')
-            if 'query' not in args:
-                raise ValueError('Missing required parameter: query')
-            return await self._handle_execute_query(args, ctx)
-
-        @self.server.tool(
-            name='analyzeQueryPerformance',
-            description='Analyzes the performance characteristics of a CQL query - args: keyspace, query',
-        )
-        async def analyze_query_performance(args: Dict[str, Any], ctx: Context = None) -> str:
-            # Validate required parameters
-            if 'keyspace' not in args:
-                raise ValueError('Missing required parameter: keyspace')
-            if 'query' not in args:
-                raise ValueError('Missing required parameter: query')
-            return await self._handle_analyze_query_performance(args, ctx)
-
-    async def _handle_list_keyspaces(self, args: Dict[str, Any], ctx: Optional[Any] = None) -> str:
+    def handle_list_keyspaces(self, args: Dict[str, Any], ctx: Optional[Any] = None) -> str:
         """Handle the listKeyspaces tool."""
         try:
             keyspaces = self.schema_service.list_keyspaces()
@@ -144,7 +163,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about Cassandra/Keyspaces
             if ctx:
-                await ctx.info('Adding contextual information about Cassandra/Keyspaces')
+                ctx.info('Adding contextual information about Cassandra/Keyspaces')
                 formatted_text += build_list_keyspaces_context(keyspaces)
 
             return formatted_text
@@ -152,9 +171,7 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error listing keyspaces: {str(e)}')
             raise Exception(f'Error listing keyspaces: {str(e)}')
 
-    async def _handle_list_tables(
-        self, args: Dict[str, Any], ctx: Optional[Context] = None
-    ) -> str:
+    def _handle_list_tables(self, args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
         """Handle the listTables tool."""
         try:
             keyspace_name = args.get('keyspace')
@@ -175,9 +192,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about tables in Cassandra
             if ctx:
-                await ctx.info(
-                    f'Adding contextual information about tables in keyspace {keyspace_name}'
-                )
+                ctx.info(f'Adding contextual information about tables in keyspace {keyspace_name}')
                 formatted_text += build_list_tables_context(keyspace_name, tables)
 
             return formatted_text
@@ -185,7 +200,7 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error listing tables: {str(e)}')
             raise Exception(f'Error listing tables: {str(e)}')
 
-    async def _handle_describe_keyspace(
+    def _handle_describe_keyspace(
         self, args: Dict[str, Any], ctx: Optional[Context] = None
     ) -> str:
         """Handle the describeKeyspace tool."""
@@ -220,7 +235,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about replication strategies
             if ctx:
-                await ctx.info('Adding contextual information about replication strategies')
+                ctx.info('Adding contextual information about replication strategies')
                 formatted_text += build_keyspace_details_context(keyspace_details)
 
             return formatted_text
@@ -228,9 +243,7 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error describing keyspace: {str(e)}')
             raise Exception(f'Error describing keyspace: {str(e)}')
 
-    async def _handle_describe_table(
-        self, args: Dict[str, Any], ctx: Optional[Context] = None
-    ) -> str:
+    def _handle_describe_table(self, args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
         """Handle the describeTable tool."""
         try:
             keyspace_name = args.get('keyspace')
@@ -289,7 +302,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about Cassandra data types and primary keys
             if ctx:
-                await ctx.info(
+                ctx.info(
                     'Adding contextual information about Cassandra data types and primary keys'
                 )
                 formatted_text += build_table_details_context(table_details)
@@ -299,9 +312,7 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error describing table: {str(e)}')
             raise Exception(f'Error describing table: {str(e)}')
 
-    async def _handle_execute_query(
-        self, args: Dict[str, Any], ctx: Optional[Context] = None
-    ) -> str:
+    def _handle_execute_query(self, args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
         """Handle the executeQuery tool."""
         try:
             keyspace_name = args.get('keyspace')
@@ -361,7 +372,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about CQL queries
             if ctx:
-                await ctx.info('Adding contextual information about CQL queries')
+                ctx.info('Adding contextual information about CQL queries')
                 formatted_text += build_query_result_context(query_results)
 
             return formatted_text
@@ -373,7 +384,7 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error executing query: {str(e)}')
             raise Exception(f'Error executing query: {str(e)}')
 
-    async def _handle_analyze_query_performance(
+    def _handle_analyze_query_performance(
         self, args: Dict[str, Any], ctx: Optional[Context] = None
     ) -> str:
         """Handle the analyzeQueryPerformance tool."""
@@ -403,9 +414,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about query performance in Cassandra
             if ctx:
-                await ctx.info(
-                    'Adding contextual information about query performance in Cassandra'
-                )
+                ctx.info('Adding contextual information about query performance in Cassandra')
                 formatted_text += build_query_analysis_context(analysis_result)
 
             return formatted_text
@@ -413,42 +422,23 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error analyzing query: {str(e)}')
             raise Exception(f'Error analyzing query: {str(e)}')
 
-    def start(self) -> None:
-        """Start the MCP server."""
-        logger.info('Starting the Keyspaces MCP Server on STDIO ...')
-        self.server.run()
-
-    def stop(self) -> None:
-        """Stop the MCP server."""
-        logger.info('Keyspaces MCP Server stopped')
-
 
 def main():
-    """Run the MCP server."""
-    try:
-        # Load configuration
-        app_config = AppConfig.from_env()
+    """Run the MCP server with CLI argument support."""
+    parser = argparse.ArgumentParser(
+        description='An AWS Labs MCP server for interacting with Amazon Keyspaces (for Apache Cassandra)'
+    )
+    parser.add_argument('--sse', action='store_true', help='Use SSE transport')
+    parser.add_argument('--port', type=int, default=8888, help='Port to run the server on')
 
-        # Initialize client
-        cassandra_client = UnifiedCassandraClient(app_config.database_config)
+    args = parser.parse_args()
 
-        # Initialize services
-        data_service = DataService(cassandra_client)
-        schema_service = SchemaService(cassandra_client)
-        query_analysis_service = QueryAnalysisService(cassandra_client, schema_service)
-
-        # Start the MCP server
-        mcp = KeyspacesMcpStdioServer(data_service, query_analysis_service, schema_service)
-
-        # Run the server asynchronously
-        asyncio.run(mcp.start())
-
-    except KeyboardInterrupt:
-        logger.info('Keyboard interrupt received, shutting down...')
-        sys.exit(0)
-    except Exception as e:
-        logger.error(f'Failed to start MCP server: {str(e)}')
-        sys.exit(1)
+    # Run server with appropriate transport
+    if args.sse:
+        mcp.settings.port = args.port
+        mcp.run(transport='sse')
+    else:
+        mcp.run()
 
 
 if __name__ == '__main__':

@@ -20,7 +20,13 @@ class TestMain:
     @patch('awslabs.amazon_keyspaces_mcp_server.server.mcp.run')
     @patch('sys.argv', ['awslabs.amazon-keyspaces-mcp-server'])
     def test_main_default(self, mock_run):
-        """Test main function with default arguments."""
+        """Test main function with default arguments.
+
+        This test verifies that:
+        1. The main function runs without errors
+        2. The mcp.run method is called once
+        3. No transport parameter is passed to mcp.run
+        """
         # Call the main function
         main()
 
@@ -31,7 +37,13 @@ class TestMain:
     @patch('awslabs.amazon_keyspaces_mcp_server.server.mcp.run')
     @patch('sys.argv', ['awslabs.amazon-keyspaces-mcp-server', '--sse', '--port', '9999'])
     def test_main_sse(self, mock_run):
-        """Test main function with SSE transport."""
+        """Test main function with SSE transport.
+
+        This test verifies that:
+        1. The main function correctly processes command line arguments
+        2. The mcp.run method is called with transport='sse'
+        3. The port setting is correctly set to 9999
+        """
         # Call the main function
         main()
 
