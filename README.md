@@ -32,14 +32,15 @@ A suite of specialized MCP servers that help you get the most out of AWS, wherev
     - [AWS Location Service MCP Server](#aws-location-service-mcp-server)
     - [Git Repo Research MCP Server](#git-repo-research-mcp-server)
     - [Code Documentation Generation MCP Server](#code-documentation-generation-mcp-server)
-    - [Amazon Aurora Postgres MCP Server](#amazon-aurora-postgres-mcp-server)
     - [Amazon Aurora MySql MCP Server](#amazon-aurora-mysql-mcp-server)
+    - [Amazon Aurora DSQL MCP Server](#amazon-aurora-dsql-mcp-server)
+    - [Amazon Aurora Postgres MCP Server](#amazon-aurora-postgres-mcp-server)
     - [Amazon MQ MCP Server](#amazon-mq-mcp-server)
     - [Synthetic Data MCP Server](#synthetic-data-mcp-server)
-    - [Amazon Aurora DSQL MCP Server](#amazon-aurora-dsql-mcp-server)
-    - [Amazon DynamoDB MCP Server](#amazon-dynamodb-mcp-server)
-    - [Amazon Neptune MCP Server](#amazon-neptune-mcp-server)
     - [Amazon DocumentDB MCP Server](#amazon-documentdb-mcp-server)
+    - [Amazon DynamoDB MCP Server](#amazon-dynamodb-mcp-server)
+    - [Amazon Keyspaces MCP Server](#amazon-keyspaces-mcp-server)
+    - [Amazon Neptune MCP Server](#amazon-neptune-mcp-server)
     - [Use Cases for the Servers](#use-cases-for-the-servers)
   - [Installation and Setup](#installation-and-setup)
     - [Running MCP servers in containers](#running-mcp-servers-in-containers)
@@ -350,6 +351,8 @@ A server for interacting with Amazon Keyspaces (for Apache Cassandra).
 - Execute CQL SELECT queries
 - Analyze schema design and query performance
 - Cassandra-compatible
+
+[Learn more](src/amazon-keyspaces-mcp-server/README.md) | [Documentation](https://awslabs.github.io/mcp/servers/amazon-keyspaces-mcp-server/)
 
 ### Amazon Aurora MySql MCP Server
 
