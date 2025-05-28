@@ -10,7 +10,6 @@
 # and limitations under the License.
 """awslabs MCP Server implementation for Amazon Keyspaces (for Apache Cassandra)."""
 
-import argparse
 import sys
 from .client import UnifiedCassandraClient
 from .config import AppConfig
@@ -428,21 +427,8 @@ class KeyspacesMcpStdioServer:
 
 
 def main():
-    """Run the MCP server with CLI argument support."""
-    parser = argparse.ArgumentParser(
-        description='An AWS Labs MCP server for interacting with Amazon Keyspaces (for Apache Cassandra)'
-    )
-    parser.add_argument('--sse', action='store_true', help='Use SSE transport')
-    parser.add_argument('--port', type=int, default=8888, help='Port to run the server on')
-
-    args = parser.parse_args()
-
-    # Run server with appropriate transport
-    if args.sse:
-        mcp.settings.port = args.port
-        mcp.run(transport='sse')
-    else:
-        mcp.run()
+    """Run the MCP server."""
+    mcp.run()
 
 
 if __name__ == '__main__':
