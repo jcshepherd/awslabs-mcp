@@ -349,7 +349,7 @@ A server for interacting with Amazon Keyspaces (for Apache Cassandra).
 - Explore keyspaces and tables
 - Execute CQL SELECT queries
 - Analyze schema design and query performance
-- Cassandra-compatible 
+- Cassandra-compatible
 
 ### Amazon Aurora MySql MCP Server
 

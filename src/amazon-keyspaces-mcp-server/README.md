@@ -106,7 +106,7 @@ Keyspaces uses for TLS connections:
    # If you installed the package from PyPI
    mkdir -p ~/.keyspaces-mcp/certs
    cp sf-class2-root.crt ~/.keyspaces-mcp/certs/
-   
+
    # If you installed from source
    mkdir -p /path/to/mcp/src/amazon-keyspaces-mcp-server/awslabs/certs
    cp sf-class2-root.crt /path/to/mcp/src/amazon-keyspaces-mcp-server/awslabs/certs/
