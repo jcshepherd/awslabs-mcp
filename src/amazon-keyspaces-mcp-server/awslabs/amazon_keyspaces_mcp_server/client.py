@@ -82,14 +82,10 @@ class UnifiedCassandraClient:
 
     def _create_cassandra_session(self) -> Session:
         """Create a session for Apache Cassandra."""
-        auth_provider = None
-
-        # Add authentication if credentials are provided
-        if self.database_config.cassandra_username and self.database_config.cassandra_password:
-            auth_provider = PlainTextAuthProvider(
-                username=self.database_config.cassandra_username,
-                password=self.database_config.cassandra_password,
-            )
+        auth_provider = PlainTextAuthProvider(
+            username=self.database_config.cassandra_username,
+            password=self.database_config.cassandra_password,
+        )
 
         cluster = Cluster(
             contact_points=[self.database_config.cassandra_contact_points],
