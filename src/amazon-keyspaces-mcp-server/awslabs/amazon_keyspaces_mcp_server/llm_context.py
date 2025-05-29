@@ -14,7 +14,7 @@ from .models import KeyspaceInfo, QueryAnalysisResult, TableInfo
 from typing import Any, Dict, List
 
 
-def build_list_keyspaces_context(keyspaces: List[KeyspaceInfo]) -> Dict[str, Any]:
+def build_list_keyspaces_context(keyspaces: List[KeyspaceInfo]) -> str:
     """Provide LLM context for Amazon Keyspaces and Apache Cassandra."""
     context = {
         'cassandra_knowledge': build_cassandra_knowledge(),
@@ -155,7 +155,7 @@ def build_query_result_context(query_results: Dict[str, Any]) -> str:
 
 def build_query_analysis_context(analysis_result: QueryAnalysisResult) -> str:
     """Provide LLM context for query analysis results."""
-    context = {
+    context: Dict[str, Any] = {
         'cassandra knowledge': build_cassandra_knowledge(),
         'amazon keyspaces knowledge': build_amazon_keyspaces_knowledge(),
     }

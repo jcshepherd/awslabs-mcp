@@ -128,9 +128,9 @@ def get_proxy():
     name='listKeyspaces',
     description='Lists all keyspaces in the Cassandra/Keyspaces database - args: none',
 )
-def list_keyspaces(args: Dict[str, Any] = None, ctx: Context = None) -> str:
+def list_keyspaces(args: Optional[Dict[str, Any]] = None, ctx: Context = None) -> str:
     """Lists all keyspaces in the Cassandra/Keyspaces database."""
-    ListKeyspacesInput(**args)
+    ListKeyspacesInput(**(args or {}))
     return get_proxy().handle_list_keyspaces(args or {}, ctx)
 
 
