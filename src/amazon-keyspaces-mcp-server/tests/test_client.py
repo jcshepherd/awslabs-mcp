@@ -42,8 +42,8 @@ class TestUnifiedCassandraClient(unittest.TestCase):
             use_keyspaces=True,
             cassandra_contact_points='',
             cassandra_port=0,
-            cassandra_username='user',
-            cassandra_password='password',
+            cassandra_username='',
+            cassandra_password='',
             cassandra_local_datacenter='',
             keyspaces_endpoint='cassandra.us-west-2.amazonaws.com',
             keyspaces_region='us-west-2',
@@ -466,7 +466,8 @@ class TestUnifiedCassandraClient(unittest.TestCase):
         # Set up the response future
         mock_response_future = Mock()
         mock_coordinator_host = Mock()
-        mock_coordinator_host.__str__ = lambda self: '127.0.0.1'
+        # mock_coordinator_host.__str__ = lambda self: '127.0.0.1'
+        mock_coordinator_host.__str__ = Mock(return_value='127.0.0.1')
         mock_response_future.coordinator_host = mock_coordinator_host
 
         mock_result_set.response_future = mock_response_future

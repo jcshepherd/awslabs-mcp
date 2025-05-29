@@ -87,6 +87,8 @@ class UnifiedCassandraClient:
             password=self.database_config.cassandra_password,
         )
 
+        logger.info('Using password authentication with Apache Cassandra ...')
+
         cluster = Cluster(
             contact_points=[self.database_config.cassandra_contact_points],
             port=self.database_config.cassandra_port,
@@ -105,16 +107,12 @@ class UnifiedCassandraClient:
         # Create SSL context for Keyspaces
         ssl_context = self._create_ssl_context_for_keyspaces()
 
-        # Initialize auth_provider
-        auth_provider = None
+        auth_provider = PlainTextAuthProvider(
+            username=self.database_config.cassandra_username,
+            password=self.database_config.cassandra_password,
+        )
 
-        # Add authentication if credentials are provided
-        if self.database_config.cassandra_username and self.database_config.cassandra_password:
-            auth_provider = PlainTextAuthProvider(
-                username=self.database_config.cassandra_username,
-                password=self.database_config.cassandra_password,
-            )
-            logger.info('Using password authentication with Amazon Keyspaces ...')
+        logger.info('Using password authentication with Amazon Keyspaces ...')
 
         # Create cluster with SSL options
         if HAS_SSL_OPTIONS:
@@ -402,7 +400,7 @@ class UnifiedCassandraClient:
 
     def _build_service_characteristics(self) -> Dict[str, Any]:
         """Build service characteristics for Amazon Keyspaces."""
-        characteristics = {
+        characteristics: Dict[str, Any] = {
             'write_throughput_limitation': 'Amazon Keyspaces has specific throughput characteristics that differ from self-managed Cassandra',
             'implementation_notes': 'The service architecture imposes a 1MB item size limit and throughput constraints different from open-source Cassandra',
         }
