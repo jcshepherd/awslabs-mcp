@@ -30,7 +30,65 @@ from .llm_context import (
 from .services import DataService, QueryAnalysisService, SchemaService
 from loguru import logger
 from mcp.server.fastmcp import Context, FastMCP
+from pydantic import BaseModel, Field
 from typing import Any, Dict, Optional
+
+
+class ListKeyspacesInput(BaseModel):
+    """Input model for listing keyspaces in a Keyspaces instance or Cassandra cluster."""
+
+    args: Dict[str, Any] = Field(
+        default_factory=dict, description='Arguments for the list_keyspaces operation'
+    )
+    # No required arguments for this operation
+
+
+class ListTablesInput(BaseModel):
+    """Input model for listing tables in a specified keyspace."""
+
+    args: Dict[str, Any] = Field(
+        default_factory=dict, description='Arguments for the list_tables operation'
+    )
+    keyspace: str = Field(..., description='The keyspace to list tables from')
+
+
+class DescribeKeyspaceInput(BaseModel):
+    """Input model for retrieving metadata for a specified keyspace."""
+
+    args: Dict[str, Any] = Field(
+        default_factory=dict, description='Arguments for the describe_keyspace operation'
+    )
+    keyspace: str = Field(..., description='The keyspace to retrieve metadata for.')
+
+
+class DescribeTableInput(BaseModel):
+    """Input model for retrieving metadata for a specified table."""
+
+    args: Dict[str, Any] = Field(
+        default_factory=dict, description='Arguments for the describe_table operation'
+    )
+    keyspace: str = Field(..., description='The keyspace containing the table')
+    table: str = Field(..., description='The name of the table to describe')
+
+
+class ExecuteQueryInput(BaseModel):
+    """Input model for executing a CQL query and returning the results."""
+
+    args: Dict[str, Any] = Field(
+        default_factory=dict, description='Arguments for the execute_query operation'
+    )
+    keyspace: str = Field(..., description='The keyspace to execute the query against')
+    query: str = Field(..., description='The CQL SELECT query to execute')
+
+
+class AnalyzeQueryPerformanceInput(BaseModel):
+    """Input model for heuristically analyzing the performance of a given CQL query."""
+
+    args: Dict[str, Any] = Field(
+        default_factory=dict, description='Arguments for the analyze_query_performance operation'
+    )
+    keyspace: str = Field(..., description='The keyspace to analyze the query against')
+    query: str = Field(..., description='The CQL query to analyze for performance')
 
 
 # Remove all default handlers then add our own
@@ -72,6 +130,7 @@ def get_proxy():
 )
 def list_keyspaces(args: Dict[str, Any] = None, ctx: Context = None) -> str:
     """Lists all keyspaces in the Cassandra/Keyspaces database."""
+    ListKeyspacesInput(**args)
     return get_proxy().handle_list_keyspaces(args or {}, ctx)
 
 
@@ -81,9 +140,8 @@ def list_keyspaces(args: Dict[str, Any] = None, ctx: Context = None) -> str:
 )
 def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
     """Lists all tables in a specified keyspace."""
-    if 'keyspace' not in args:
-        raise ValueError('Missing required parameter: keyspace')
-    return get_proxy()._handle_list_tables(args, ctx)
+    validatedArgs = ListTablesInput(**args)
+    return get_proxy()._handle_list_tables({'keyspace': validatedArgs.keyspace}, ctx)
 
 
 @mcp.tool(
@@ -92,9 +150,8 @@ def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
 )
 def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
     """Gets detailed information about a keyspace."""
-    if 'keyspace' not in args:
-        raise ValueError('Missing required parameter: keyspace')
-    return get_proxy()._handle_describe_keyspace(args, ctx)
+    validatedArgs = DescribeKeyspaceInput(**args)
+    return get_proxy()._handle_describe_keyspace({'keyspace': validatedArgs.keyspace}, ctx)
 
 
 @mcp.tool(
@@ -103,11 +160,10 @@ def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
 )
 def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
     """Gets detailed information about a table."""
-    if 'keyspace' not in args:
-        raise ValueError('Missing required parameter: keyspace')
-    if 'table' not in args:
-        raise ValueError('Missing required parameter: table')
-    return get_proxy()._handle_describe_table(args, ctx)
+    validatedArgs = DescribeTableInput(**args)
+    return get_proxy()._handle_describe_table(
+        {'keyspace': validatedArgs.keyspace, 'table': validatedArgs.table}, ctx
+    )
 
 
 @mcp.tool(
@@ -116,11 +172,10 @@ def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
 )
 def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
     """Executes a read-only (SELECT) query against the database."""
-    if 'keyspace' not in args:
-        raise ValueError('Missing required parameter: keyspace')
-    if 'query' not in args:
-        raise ValueError('Missing required parameter: query')
-    return get_proxy()._handle_execute_query(args, ctx)
+    validatedArgs = ExecuteQueryInput(**args)
+    return get_proxy()._handle_execute_query(
+        {'keyspace': validatedArgs.keyspace, 'query': validatedArgs.query}, ctx
+    )
 
 
 @mcp.tool(
@@ -129,11 +184,10 @@ def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
 )
 def analyze_query_performance(args: Dict[str, Any], ctx: Context = None) -> str:
     """Analyzes the performance characteristics of a CQL query."""
-    if 'keyspace' not in args:
-        raise ValueError('Missing required parameter: keyspace')
-    if 'query' not in args:
-        raise ValueError('Missing required parameter: query')
-    return get_proxy()._handle_analyze_query_performance(args, ctx)
+    validatedArgs = AnalyzeQueryPerformanceInput(**args)
+    return get_proxy()._handle_analyze_query_performance(
+        {'keyspace': validatedArgs.keyspace, 'query': validatedArgs.query}, ctx
+    )
 
 
 class KeyspacesMcpStdioServer:

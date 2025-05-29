@@ -66,8 +66,8 @@ class TestServerTools(unittest.TestCase):
         # Call the function and verify it raises an exception
         with self.assertRaises(ValueError) as context:
             list_tables({})
-
-        self.assertIn('Missing required parameter: keyspace', str(context.exception))
+        self.assertIn('validation error for ListTablesInput', str(context.exception))
+        self.assertIn('Field required', str(context.exception))
         mock_get_proxy.assert_not_called()
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
@@ -93,8 +93,8 @@ class TestServerTools(unittest.TestCase):
         # Call the function and verify it raises an exception
         with self.assertRaises(ValueError) as context:
             describe_keyspace({})
-
-        self.assertIn('Missing required parameter: keyspace', str(context.exception))
+        self.assertIn('validation error for DescribeKeyspaceInput', str(context.exception))
+        self.assertIn('Field required', str(context.exception))
         mock_get_proxy.assert_not_called()
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
@@ -120,12 +120,14 @@ class TestServerTools(unittest.TestCase):
         # Test missing keyspace
         with self.assertRaises(ValueError) as context:
             describe_table({'table': 'users'})
-        self.assertIn('Missing required parameter: keyspace', str(context.exception))
+        self.assertIn('validation error for DescribeTableInput', str(context.exception))
+        self.assertIn('Field required', str(context.exception))
 
         # Test missing table
         with self.assertRaises(ValueError) as context:
             describe_table({'keyspace': 'mykeyspace'})
-        self.assertIn('Missing required parameter: table', str(context.exception))
+        self.assertIn('validation error for DescribeTableInput', str(context.exception))
+        self.assertIn('Field required', str(context.exception))
 
         mock_get_proxy.assert_not_called()
 
@@ -152,12 +154,13 @@ class TestServerTools(unittest.TestCase):
         # Test missing keyspace
         with self.assertRaises(ValueError) as context:
             execute_query({'query': 'SELECT * FROM users'})
-        self.assertIn('Missing required parameter: keyspace', str(context.exception))
+        self.assertIn('validation error for ExecuteQueryInput', str(context.exception))
+        self.assertIn('Field required', str(context.exception))
 
         # Test missing query
         with self.assertRaises(ValueError) as context:
             execute_query({'keyspace': 'mykeyspace'})
-        self.assertIn('Missing required parameter: query', str(context.exception))
+        self.assertIn('validation error for ExecuteQueryInput', str(context.exception))
 
         mock_get_proxy.assert_not_called()
 
@@ -186,12 +189,13 @@ class TestServerTools(unittest.TestCase):
         # Test missing keyspace
         with self.assertRaises(ValueError) as context:
             analyze_query_performance({'query': 'SELECT * FROM users'})
-        self.assertIn('Missing required parameter: keyspace', str(context.exception))
+        self.assertIn('validation error for AnalyzeQueryPerformanceInput', str(context.exception))
+        self.assertIn('Field required', str(context.exception))
 
         # Test missing query
         with self.assertRaises(ValueError) as context:
             analyze_query_performance({'keyspace': 'mykeyspace'})
-        self.assertIn('Missing required parameter: query', str(context.exception))
+        self.assertIn('validation error for AnalyzeQueryPerformanceInput', str(context.exception))
 
         mock_get_proxy.assert_not_called()
 
