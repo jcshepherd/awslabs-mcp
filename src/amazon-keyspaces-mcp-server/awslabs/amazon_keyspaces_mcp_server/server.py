@@ -220,7 +220,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about Cassandra/Keyspaces
             if ctx:
-                ctx.info('Adding contextual information about Cassandra/Keyspaces')
+                ctx.info('Adding contextual information about Cassandra/Keyspaces')  # type: ignore[unused-coroutine]
                 formatted_text += build_list_keyspaces_context(keyspaces)
 
             return formatted_text
@@ -249,7 +249,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about tables in Cassandra
             if ctx:
-                ctx.info(f'Adding contextual information about tables in keyspace {keyspace_name}')
+                ctx.info(f'Adding contextual information about tables in keyspace {keyspace_name}')  # type: ignore[unused-coroutine]
                 formatted_text += build_list_tables_context(keyspace_name, tables)
 
             return formatted_text
@@ -292,7 +292,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about replication strategies
             if ctx:
-                ctx.info('Adding contextual information about replication strategies')
+                ctx.info('Adding contextual information about replication strategies')  # type: ignore[unused-coroutine]
                 formatted_text += build_keyspace_details_context(keyspace_details)
 
             return formatted_text
@@ -361,7 +361,7 @@ class KeyspacesMcpStdioServer:
             if ctx:
                 ctx.info(
                     'Adding contextual information about Cassandra data types and primary keys'
-                )
+                )  # type: ignore[unused-coroutine]
                 formatted_text += build_table_details_context(table_details)
 
             return formatted_text
@@ -429,7 +429,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about CQL queries
             if ctx:
-                ctx.info('Adding contextual information about CQL queries')
+                ctx.info('Adding contextual information about CQL queries')  # type: ignore[unused-coroutine]
                 formatted_text += build_query_result_context(query_results)
 
             return formatted_text
@@ -471,7 +471,7 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about query performance in Cassandra
             if ctx:
-                ctx.info('Adding contextual information about query performance in Cassandra')
+                ctx.info('Adding contextual information about query performance in Cassandra')  # type: ignore[unused-coroutine]
                 formatted_text += build_query_analysis_context(analysis_result)
 
             return formatted_text
