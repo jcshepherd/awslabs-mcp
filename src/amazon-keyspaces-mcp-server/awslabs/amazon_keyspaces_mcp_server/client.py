@@ -35,9 +35,9 @@ from typing import Any, Dict, List, Optional
 
 
 # Older versions of the Cassandra Python driver may not include SSLOptions. Conditionally
-#  import it here to handle potential import errors.
+# import it here to handle potential import errors.
 try:
-    from cassandra.ssl import SSLOptions
+    from cassandra.ssl import SSLOptions  # type: ignore[import]
 
     HAS_SSL_OPTIONS = True
 except ImportError:
@@ -94,8 +94,8 @@ class UnifiedCassandraClient:
             port=self.database_config.cassandra_port,
             auth_provider=auth_provider,
             protocol_version=4,  # Use protocol version 4 for better compatibility
-            control_connection_timeout=10.0,
-            connect_timeout=10.0,
+            control_connection_timeout=CONTROL_CONNECTION_TIMEOUT,
+            connect_timeout=int(CONNECTION_TIMEOUT),
         )
 
         cluster.connection_class = AsyncoreConnection
@@ -126,7 +126,7 @@ class UnifiedCassandraClient:
                 ssl_options=ssl_options,
                 protocol_version=PROTOCOL_VERSION,
                 control_connection_timeout=CONTROL_CONNECTION_TIMEOUT,
-                connect_timeout=CONNECTION_TIMEOUT,
+                connect_timeout=int(CONNECTION_TIMEOUT),
             )
         else:
             # Fallback if SSLOptions is not available
@@ -137,7 +137,7 @@ class UnifiedCassandraClient:
                 ssl_context=ssl_context,
                 protocol_version=PROTOCOL_VERSION,
                 control_connection_timeout=CONTROL_CONNECTION_TIMEOUT,
-                connect_timeout=CONNECTION_TIMEOUT,
+                connect_timeout=int(CONNECTION_TIMEOUT),
             )
 
         cluster.connection_class = AsyncoreConnection
@@ -421,6 +421,7 @@ class UnifiedCassandraClient:
     def close(self) -> None:
         """Close the session."""
         if hasattr(self, 'session') and self.session:
-            self.session.cluster.shutdown()
+            if self.session.cluster:
+                self.session.cluster.shutdown()
             self.session.shutdown()
             logger.info('Closed session')

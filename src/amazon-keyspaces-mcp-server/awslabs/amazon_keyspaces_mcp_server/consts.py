@@ -22,8 +22,9 @@ LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 CASSANDRA_DEFAULT_PORT = 9042
 KEYSPACES_DEFAULT_PORT = 9142
 
-# Connection timeouts (seconds)
-CONNECTION_TIMEOUT = 10.0
+# Connection timeouts in seconds. Note that these have different types (int and
+# float) in the Cassandra driver itself.
+CONNECTION_TIMEOUT = 10
 CONTROL_CONNECTION_TIMEOUT = 10.0
 
 # Protocol version for Cassandra driver

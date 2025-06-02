@@ -128,7 +128,7 @@ def get_proxy():
     name='listKeyspaces',
     description='Lists all keyspaces in the Cassandra/Keyspaces database - args: none',
 )
-def list_keyspaces(args: Optional[Dict[str, Any]] = None, ctx: Context = None) -> str:
+def list_keyspaces(args: Optional[Dict[str, Any]] = None, ctx: Optional[Context] = None) -> str:
     """Lists all keyspaces in the Cassandra/Keyspaces database."""
     ListKeyspacesInput(**(args or {}))
     return get_proxy().handle_list_keyspaces(args or {}, ctx)
@@ -138,7 +138,7 @@ def list_keyspaces(args: Optional[Dict[str, Any]] = None, ctx: Context = None) -
     name='listTables',
     description='Lists all tables in a specified keyspace - args: keyspace',
 )
-def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
+def list_tables(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
     """Lists all tables in a specified keyspace."""
     validatedArgs = ListTablesInput(**args)
     return get_proxy()._handle_list_tables({'keyspace': validatedArgs.keyspace}, ctx)
@@ -148,7 +148,7 @@ def list_tables(args: Dict[str, Any], ctx: Context = None) -> str:
     name='describeKeyspace',
     description='Gets detailed information about a keyspace - args: keyspace',
 )
-def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
+def describe_keyspace(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
     """Gets detailed information about a keyspace."""
     validatedArgs = DescribeKeyspaceInput(**args)
     return get_proxy()._handle_describe_keyspace({'keyspace': validatedArgs.keyspace}, ctx)
@@ -158,7 +158,7 @@ def describe_keyspace(args: Dict[str, Any], ctx: Context = None) -> str:
     name='describeTable',
     description='Gets detailed information about a table - args: keyspace, table',
 )
-def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
+def describe_table(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
     """Gets detailed information about a table."""
     validatedArgs = DescribeTableInput(**args)
     return get_proxy()._handle_describe_table(
@@ -170,7 +170,7 @@ def describe_table(args: Dict[str, Any], ctx: Context = None) -> str:
     name='executeQuery',
     description='Executes a read-only SELECT query against the database - args: keyspace, query',
 )
-def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
+def execute_query(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
     """Executes a read-only (SELECT) query against the database."""
     validatedArgs = ExecuteQueryInput(**args)
     return get_proxy()._handle_execute_query(
@@ -182,7 +182,7 @@ def execute_query(args: Dict[str, Any], ctx: Context = None) -> str:
     name='analyzeQueryPerformance',
     description='Analyzes the performance characteristics of a CQL query - args: keyspace, query',
 )
-def analyze_query_performance(args: Dict[str, Any], ctx: Context = None) -> str:
+def analyze_query_performance(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
     """Analyzes the performance characteristics of a CQL query."""
     validatedArgs = AnalyzeQueryPerformanceInput(**args)
     return get_proxy()._handle_analyze_query_performance(
