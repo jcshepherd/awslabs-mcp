@@ -30,65 +30,8 @@ from .llm_context import (
 from .services import DataService, QueryAnalysisService, SchemaService
 from loguru import logger
 from mcp.server.fastmcp import Context, FastMCP
-from pydantic import BaseModel, Field
-from typing import Any, Dict, Optional
-
-
-class ListKeyspacesInput(BaseModel):
-    """Input model for listing keyspaces in a Keyspaces instance or Cassandra cluster."""
-
-    args: Dict[str, Any] = Field(
-        default_factory=dict, description='Arguments for the list_keyspaces operation'
-    )
-    # No required arguments for this operation
-
-
-class ListTablesInput(BaseModel):
-    """Input model for listing tables in a specified keyspace."""
-
-    args: Dict[str, Any] = Field(
-        default_factory=dict, description='Arguments for the list_tables operation'
-    )
-    keyspace: str = Field(..., description='The keyspace to list tables from')
-
-
-class DescribeKeyspaceInput(BaseModel):
-    """Input model for retrieving metadata for a specified keyspace."""
-
-    args: Dict[str, Any] = Field(
-        default_factory=dict, description='Arguments for the describe_keyspace operation'
-    )
-    keyspace: str = Field(..., description='The keyspace to retrieve metadata for.')
-
-
-class DescribeTableInput(BaseModel):
-    """Input model for retrieving metadata for a specified table."""
-
-    args: Dict[str, Any] = Field(
-        default_factory=dict, description='Arguments for the describe_table operation'
-    )
-    keyspace: str = Field(..., description='The keyspace containing the table')
-    table: str = Field(..., description='The name of the table to describe')
-
-
-class ExecuteQueryInput(BaseModel):
-    """Input model for executing a CQL query and returning the results."""
-
-    args: Dict[str, Any] = Field(
-        default_factory=dict, description='Arguments for the execute_query operation'
-    )
-    keyspace: str = Field(..., description='The keyspace to execute the query against')
-    query: str = Field(..., description='The CQL SELECT query to execute')
-
-
-class AnalyzeQueryPerformanceInput(BaseModel):
-    """Input model for heuristically analyzing the performance of a given CQL query."""
-
-    args: Dict[str, Any] = Field(
-        default_factory=dict, description='Arguments for the analyze_query_performance operation'
-    )
-    keyspace: str = Field(..., description='The keyspace to analyze the query against')
-    query: str = Field(..., description='The CQL query to analyze for performance')
+from pydantic import Field
+from typing import Any, Optional
 
 
 # Remove all default handlers then add our own
@@ -128,66 +71,74 @@ def get_proxy():
     name='listKeyspaces',
     description='Lists all keyspaces in the Cassandra/Keyspaces database - args: none',
 )
-def list_keyspaces(args: Optional[Dict[str, Any]] = None, ctx: Optional[Context] = None) -> str:
+def list_keyspaces(
+    ctx: Optional[Context] = None,
+) -> str:
     """Lists all keyspaces in the Cassandra/Keyspaces database."""
-    ListKeyspacesInput(**(args or {}))
-    return get_proxy().handle_list_keyspaces(args or {}, ctx)
+    return get_proxy().handle_list_keyspaces(ctx)
 
 
 @mcp.tool(
     name='listTables',
     description='Lists all tables in a specified keyspace - args: keyspace',
 )
-def list_tables(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+def list_tables(
+    keyspace: str = Field(..., description='The keyspace to list tables from.'),
+    ctx: Optional[Context] = None,
+) -> str:
     """Lists all tables in a specified keyspace."""
-    validatedArgs = ListTablesInput(**args)
-    return get_proxy()._handle_list_tables({'keyspace': validatedArgs.keyspace}, ctx)
+    return get_proxy()._handle_list_tables(keyspace, ctx)
 
 
 @mcp.tool(
     name='describeKeyspace',
     description='Gets detailed information about a keyspace - args: keyspace',
 )
-def describe_keyspace(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+def describe_keyspace(
+    keyspace: str = Field(..., description='The keyspace to retrieve metadata for.'),
+    ctx: Optional[Context] = None,
+) -> str:
     """Gets detailed information about a keyspace."""
-    validatedArgs = DescribeKeyspaceInput(**args)
-    return get_proxy()._handle_describe_keyspace({'keyspace': validatedArgs.keyspace}, ctx)
+    return get_proxy()._handle_describe_keyspace(keyspace, ctx)
 
 
 @mcp.tool(
     name='describeTable',
     description='Gets detailed information about a table - args: keyspace, table',
 )
-def describe_table(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+def describe_table(
+    keyspace: str = Field(..., description='The keyspace containing the table'),
+    table: str = Field(..., description='The name of the table to describe'),
+    ctx: Optional[Context] = None,
+) -> str:
     """Gets detailed information about a table."""
-    validatedArgs = DescribeTableInput(**args)
-    return get_proxy()._handle_describe_table(
-        {'keyspace': validatedArgs.keyspace, 'table': validatedArgs.table}, ctx
-    )
+    return get_proxy()._handle_describe_table(keyspace, table, ctx)
 
 
 @mcp.tool(
     name='executeQuery',
     description='Executes a read-only SELECT query against the database - args: keyspace, query',
 )
-def execute_query(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+def execute_query(
+    keyspace: str = Field(..., description='The keyspace to execute the query against'),
+    query: str = Field(..., description='The CQL SELECT query to execute'),
+    ctx: Optional[Context] = None,
+) -> str:
     """Executes a read-only (SELECT) query against the database."""
-    validatedArgs = ExecuteQueryInput(**args)
-    return get_proxy()._handle_execute_query(
-        {'keyspace': validatedArgs.keyspace, 'query': validatedArgs.query}, ctx
-    )
+    return get_proxy()._handle_execute_query(keyspace, query, ctx)
 
 
 @mcp.tool(
     name='analyzeQueryPerformance',
     description='Analyzes the performance characteristics of a CQL query - args: keyspace, query',
 )
-def analyze_query_performance(args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+def analyze_query_performance(
+    keyspace: str = Field(..., description='The keyspace to analyze the query against'),
+    query: str = Field(..., description='The CQL query to analyze for performance'),
+    ctx: Optional[Context] = None,
+) -> str:
     """Analyzes the performance characteristics of a CQL query."""
-    validatedArgs = AnalyzeQueryPerformanceInput(**args)
-    return get_proxy()._handle_analyze_query_performance(
-        {'keyspace': validatedArgs.keyspace, 'query': validatedArgs.query}, ctx
-    )
+    return get_proxy()._handle_analyze_query_performance(keyspace, query, ctx)
 
 
 class KeyspacesMcpStdioServer:
@@ -204,7 +155,7 @@ class KeyspacesMcpStdioServer:
         self.query_analysis_service = query_analysis_service
         self.schema_service = schema_service
 
-    def handle_list_keyspaces(self, args: Dict[str, Any], ctx: Optional[Any] = None) -> str:
+    def handle_list_keyspaces(self, ctx: Optional[Any] = None) -> str:
         """Handle the listKeyspaces tool."""
         try:
             keyspaces = self.schema_service.list_keyspaces()
@@ -228,19 +179,17 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error listing keyspaces: {str(e)}')
             raise Exception(f'Error listing keyspaces: {str(e)}')
 
-    def _handle_list_tables(self, args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+    def _handle_list_tables(self, keyspace: str, ctx: Optional[Context] = None) -> str:
         """Handle the listTables tool."""
         try:
-            keyspace_name = args.get('keyspace')
-
-            if not keyspace_name:
+            if not keyspace:
                 raise Exception('Keyspace name is required')
 
-            tables = self.schema_service.list_tables(keyspace_name)
+            tables = self.schema_service.list_tables(keyspace)
 
             # Format table names as a markdown list for better display
             table_names = [t.name for t in tables]
-            formatted_text = f'## Tables in Keyspace `{keyspace_name}`\n\n'
+            formatted_text = f'## Tables in Keyspace `{keyspace}`\n\n'
             if table_names:
                 for name in table_names:
                     formatted_text += f'- `{name}`\n'
@@ -249,28 +198,24 @@ class KeyspacesMcpStdioServer:
 
             # Add contextual information about tables in Cassandra
             if ctx:
-                ctx.info(f'Adding contextual information about tables in keyspace {keyspace_name}')  # type: ignore[unused-coroutine]
-                formatted_text += build_list_tables_context(keyspace_name, tables)
+                ctx.info(f'Adding contextual information about tables in keyspace {keyspace}')  # type: ignore[unused-coroutine]
+                formatted_text += build_list_tables_context(keyspace, tables)
 
             return formatted_text
         except Exception as e:
             logger.error(f'Error listing tables: {str(e)}')
             raise Exception(f'Error listing tables: {str(e)}')
 
-    def _handle_describe_keyspace(
-        self, args: Dict[str, Any], ctx: Optional[Context] = None
-    ) -> str:
+    def _handle_describe_keyspace(self, keyspace: str, ctx: Optional[Context] = None) -> str:
         """Handle the describeKeyspace tool."""
         try:
-            keyspace_name = args.get('keyspace')
-
-            if not keyspace_name:
+            if not keyspace:
                 raise Exception('Keyspace name is required')
 
-            keyspace_details = self.schema_service.describe_keyspace(keyspace_name)
+            keyspace_details = self.schema_service.describe_keyspace(keyspace)
 
             # Format keyspace details as markdown
-            formatted_text = f'## Keyspace: `{keyspace_name}`\n\n'
+            formatted_text = f'## Keyspace: `{keyspace}`\n\n'
 
             # Add replication strategy
             replication = keyspace_details.get('replication', {})
@@ -300,22 +245,21 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error describing keyspace: {str(e)}')
             raise Exception(f'Error describing keyspace: {str(e)}')
 
-    def _handle_describe_table(self, args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+    def _handle_describe_table(
+        self, keyspace: str, table: str, ctx: Optional[Context] = None
+    ) -> str:
         """Handle the describeTable tool."""
         try:
-            keyspace_name = args.get('keyspace')
-            table_name = args.get('table')
-
-            if not keyspace_name:
+            if not keyspace:
                 raise Exception('Keyspace name is required')
 
-            if not table_name:
+            if not table:
                 raise Exception('Table name is required')
 
-            table_details = self.schema_service.describe_table(keyspace_name, table_name)
+            table_details = self.schema_service.describe_table(keyspace, table)
 
             # Format table details as markdown
-            formatted_text = f'## Table: `{keyspace_name}.{table_name}`\n\n'
+            formatted_text = f'## Table: `{keyspace}.{table}`\n\n'
 
             # Add columns section
             formatted_text += '### Columns\n\n'
@@ -369,13 +313,12 @@ class KeyspacesMcpStdioServer:
             logger.error(f'Error describing table: {str(e)}')
             raise Exception(f'Error describing table: {str(e)}')
 
-    def _handle_execute_query(self, args: Dict[str, Any], ctx: Optional[Context] = None) -> str:
+    def _handle_execute_query(
+        self, keyspace: str, query: str, ctx: Optional[Context] = None
+    ) -> str:
         """Handle the executeQuery tool."""
         try:
-            keyspace_name = args.get('keyspace')
-            query = args.get('query')
-
-            if not keyspace_name:
+            if not keyspace:
                 raise Exception('Keyspace name is required')
 
             if not query:
@@ -391,7 +334,7 @@ class KeyspacesMcpStdioServer:
                 raise Exception('Query contains potentially unsafe operations')
 
             # Execute the query using the DataService
-            query_results = self.data_service.execute_read_only_query(keyspace_name, query)
+            query_results = self.data_service.execute_read_only_query(keyspace, query)
 
             # Format the results for display
             formatted_text = '## Query Results\n\n'
@@ -442,20 +385,17 @@ class KeyspacesMcpStdioServer:
             raise Exception(f'Error executing query: {str(e)}')
 
     def _handle_analyze_query_performance(
-        self, args: Dict[str, Any], ctx: Optional[Context] = None
+        self, keyspace: str, query: str, ctx: Optional[Context] = None
     ) -> str:
         """Handle the analyzeQueryPerformance tool."""
         try:
-            keyspace_name = args.get('keyspace')
-            query = args.get('query')
-
-            if not keyspace_name:
+            if not keyspace:
                 raise Exception('Keyspace name is required')
 
             if not query:
                 raise Exception('Query is required')
 
-            analysis_result = self.query_analysis_service.analyze_query(keyspace_name, query)
+            analysis_result = self.query_analysis_service.analyze_query(keyspace, query)
 
             # Build a user-friendly response
             formatted_text = '## Query Analysis Results\n\n'

@@ -39,11 +39,11 @@ class TestServerTools(unittest.TestCase):
         mock_get_proxy.return_value = mock_proxy
 
         # Call the function
-        result = list_keyspaces({})
+        result = list_keyspaces()
 
         # Verify the result
         self.assertEqual(result, 'Keyspaces list')
-        mock_proxy.handle_list_keyspaces.assert_called_once_with({}, None)
+        mock_proxy.handle_list_keyspaces.assert_called_once_with(None)
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
     def test_list_tables(self, mock_get_proxy):
@@ -54,21 +54,11 @@ class TestServerTools(unittest.TestCase):
         mock_get_proxy.return_value = mock_proxy
 
         # Call the function
-        result = list_tables({'keyspace': 'mykeyspace'})
+        result = list_tables('mykeyspace')
 
         # Verify the result
         self.assertEqual(result, 'Tables list')
-        mock_proxy._handle_list_tables.assert_called_once_with({'keyspace': 'mykeyspace'}, None)
-
-    @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
-    def test_list_tables_missing_keyspace(self, mock_get_proxy):
-        """Test the list_tables tool with missing keyspace parameter."""
-        # Call the function and verify it raises an exception
-        with self.assertRaises(ValueError) as context:
-            list_tables({})
-        self.assertIn('validation error for ListTablesInput', str(context.exception))
-        self.assertIn('Field required', str(context.exception))
-        mock_get_proxy.assert_not_called()
+        mock_proxy._handle_list_tables.assert_called_once_with('mykeyspace', None)
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
     def test_describe_keyspace(self, mock_get_proxy):
@@ -79,23 +69,11 @@ class TestServerTools(unittest.TestCase):
         mock_get_proxy.return_value = mock_proxy
 
         # Call the function
-        result = describe_keyspace({'keyspace': 'mykeyspace'})
+        result = describe_keyspace('mykeyspace')
 
         # Verify the result
         self.assertEqual(result, 'Keyspace details')
-        mock_proxy._handle_describe_keyspace.assert_called_once_with(
-            {'keyspace': 'mykeyspace'}, None
-        )
-
-    @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
-    def test_describe_keyspace_missing_keyspace(self, mock_get_proxy):
-        """Test the describe_keyspace tool with missing keyspace parameter."""
-        # Call the function and verify it raises an exception
-        with self.assertRaises(ValueError) as context:
-            describe_keyspace({})
-        self.assertIn('validation error for DescribeKeyspaceInput', str(context.exception))
-        self.assertIn('Field required', str(context.exception))
-        mock_get_proxy.assert_not_called()
+        mock_proxy._handle_describe_keyspace.assert_called_once_with('mykeyspace', None)
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
     def test_describe_table(self, mock_get_proxy):
@@ -106,30 +84,11 @@ class TestServerTools(unittest.TestCase):
         mock_get_proxy.return_value = mock_proxy
 
         # Call the function
-        result = describe_table({'keyspace': 'mykeyspace', 'table': 'users'})
+        result = describe_table('mykeyspace', 'users')
 
         # Verify the result
         self.assertEqual(result, 'Table details')
-        mock_proxy._handle_describe_table.assert_called_once_with(
-            {'keyspace': 'mykeyspace', 'table': 'users'}, None
-        )
-
-    @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
-    def test_describe_table_missing_parameters(self, mock_get_proxy):
-        """Test the describe_table tool with missing parameters."""
-        # Test missing keyspace
-        with self.assertRaises(ValueError) as context:
-            describe_table({'table': 'users'})
-        self.assertIn('validation error for DescribeTableInput', str(context.exception))
-        self.assertIn('Field required', str(context.exception))
-
-        # Test missing table
-        with self.assertRaises(ValueError) as context:
-            describe_table({'keyspace': 'mykeyspace'})
-        self.assertIn('validation error for DescribeTableInput', str(context.exception))
-        self.assertIn('Field required', str(context.exception))
-
-        mock_get_proxy.assert_not_called()
+        mock_proxy._handle_describe_table.assert_called_once_with('mykeyspace', 'users', None)
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
     def test_execute_query(self, mock_get_proxy):
@@ -140,29 +99,13 @@ class TestServerTools(unittest.TestCase):
         mock_get_proxy.return_value = mock_proxy
 
         # Call the function
-        result = execute_query({'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'})
+        result = execute_query('mykeyspace', 'SELECT * FROM users')
 
         # Verify the result
         self.assertEqual(result, 'Query results')
         mock_proxy._handle_execute_query.assert_called_once_with(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}, None
+            'mykeyspace', 'SELECT * FROM users', None
         )
-
-    @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
-    def test_execute_query_missing_parameters(self, mock_get_proxy):
-        """Test the execute_query tool with missing parameters."""
-        # Test missing keyspace
-        with self.assertRaises(ValueError) as context:
-            execute_query({'query': 'SELECT * FROM users'})
-        self.assertIn('validation error for ExecuteQueryInput', str(context.exception))
-        self.assertIn('Field required', str(context.exception))
-
-        # Test missing query
-        with self.assertRaises(ValueError) as context:
-            execute_query({'keyspace': 'mykeyspace'})
-        self.assertIn('validation error for ExecuteQueryInput', str(context.exception))
-
-        mock_get_proxy.assert_not_called()
 
     @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
     def test_analyze_query_performance(self, mock_get_proxy):
@@ -173,31 +116,13 @@ class TestServerTools(unittest.TestCase):
         mock_get_proxy.return_value = mock_proxy
 
         # Call the function
-        result = analyze_query_performance(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}
-        )
+        result = analyze_query_performance('mykeyspace', 'SELECT * FROM users')
 
         # Verify the result
         self.assertEqual(result, 'Query analysis')
         mock_proxy._handle_analyze_query_performance.assert_called_once_with(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}, None
+            'mykeyspace', 'SELECT * FROM users', None
         )
-
-    @patch('awslabs.amazon_keyspaces_mcp_server.server.get_proxy')
-    def test_analyze_query_performance_missing_parameters(self, mock_get_proxy):
-        """Test the analyze_query_performance tool with missing parameters."""
-        # Test missing keyspace
-        with self.assertRaises(ValueError) as context:
-            analyze_query_performance({'query': 'SELECT * FROM users'})
-        self.assertIn('validation error for AnalyzeQueryPerformanceInput', str(context.exception))
-        self.assertIn('Field required', str(context.exception))
-
-        # Test missing query
-        with self.assertRaises(ValueError) as context:
-            analyze_query_performance({'keyspace': 'mykeyspace'})
-        self.assertIn('validation error for AnalyzeQueryPerformanceInput', str(context.exception))
-
-        mock_get_proxy.assert_not_called()
 
 
 class TestKeyspacesMcpStdioServer(unittest.TestCase):
@@ -221,7 +146,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.list_keyspaces.return_value = [keyspace1, keyspace2]
 
         # Call the method
-        result = self.server.handle_list_keyspaces({}, self.mock_context)
+        result = self.server.handle_list_keyspaces(self.mock_context)
 
         # Verify the result
         self.assertIn('## Available Keyspaces', result)
@@ -236,7 +161,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.list_keyspaces.return_value = []
 
         # Call the method
-        result = self.server.handle_list_keyspaces({}, self.mock_context)
+        result = self.server.handle_list_keyspaces(self.mock_context)
 
         # Verify the result
         self.assertIn('## Available Keyspaces', result)
@@ -251,7 +176,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
-            self.server.handle_list_keyspaces({}, self.mock_context)
+            self.server.handle_list_keyspaces(self.mock_context)
 
         self.assertIn('Error listing keyspaces', str(context.exception))
         self.mock_schema_service.list_keyspaces.assert_called_once()
@@ -264,7 +189,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.list_tables.return_value = [table1, table2]
 
         # Call the method
-        result = self.server._handle_list_tables({'keyspace': 'mykeyspace'}, self.mock_context)
+        result = self.server._handle_list_tables('mykeyspace', self.mock_context)
 
         # Verify the result
         self.assertIn('## Tables in Keyspace `mykeyspace`', result)
@@ -273,22 +198,13 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.list_tables.assert_called_once_with('mykeyspace')
         self.mock_context.info.assert_called_once()
 
-    def test_handle_list_tables_missing_keyspace(self):
-        """Test the _handle_list_tables method with missing keyspace."""
-        # Call the method and verify it raises an exception
-        with self.assertRaises(Exception) as context:
-            self.server._handle_list_tables({}, self.mock_context)
-
-        self.assertIn('Keyspace name is required', str(context.exception))
-        self.mock_schema_service.list_tables.assert_not_called()
-
     def test_handle_list_tables_empty(self):
         """Test the _handle_list_tables method with no tables."""
         # Set up the mock
         self.mock_schema_service.list_tables.return_value = []
 
         # Call the method
-        result = self.server._handle_list_tables({'keyspace': 'mykeyspace'}, self.mock_context)
+        result = self.server._handle_list_tables('mykeyspace', self.mock_context)
 
         # Verify the result
         self.assertIn('## Tables in Keyspace `mykeyspace`', result)
@@ -303,7 +219,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
-            self.server._handle_list_tables({'keyspace': 'mykeyspace'}, self.mock_context)
+            self.server._handle_list_tables('mykeyspace', self.mock_context)
 
         self.assertIn('Error listing tables', str(context.exception))
         self.mock_schema_service.list_tables.assert_called_once_with('mykeyspace')
@@ -319,9 +235,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.describe_keyspace.return_value = keyspace_details
 
         # Call the method
-        result = self.server._handle_describe_keyspace(
-            {'keyspace': 'mykeyspace'}, self.mock_context
-        )
+        result = self.server._handle_describe_keyspace('mykeyspace', self.mock_context)
 
         # Verify the result
         self.assertIn('## Keyspace: `mykeyspace`', result)
@@ -343,9 +257,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.describe_keyspace.return_value = keyspace_details
 
         # Call the method
-        result = self.server._handle_describe_keyspace(
-            {'keyspace': 'mykeyspace'}, self.mock_context
-        )
+        result = self.server._handle_describe_keyspace('mykeyspace', self.mock_context)
 
         # Verify the result
         self.assertIn('## Keyspace: `mykeyspace`', result)
@@ -356,15 +268,6 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.describe_keyspace.assert_called_once_with('mykeyspace')
         self.mock_context.info.assert_called_once()
 
-    def test_handle_describe_keyspace_missing_keyspace(self):
-        """Test the _handle_describe_keyspace method with missing keyspace."""
-        # Call the method and verify it raises an exception
-        with self.assertRaises(Exception) as context:
-            self.server._handle_describe_keyspace({}, self.mock_context)
-
-        self.assertIn('Keyspace name is required', str(context.exception))
-        self.mock_schema_service.describe_keyspace.assert_not_called()
-
     def test_handle_describe_keyspace_error(self):
         """Test the _handle_describe_keyspace method with an error."""
         # Set up the mock
@@ -372,7 +275,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
-            self.server._handle_describe_keyspace({'keyspace': 'mykeyspace'}, self.mock_context)
+            self.server._handle_describe_keyspace('mykeyspace', self.mock_context)
 
         self.assertIn('Error describing keyspace', str(context.exception))
         self.mock_schema_service.describe_keyspace.assert_called_once_with('mykeyspace')
@@ -394,9 +297,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.describe_table.return_value = table_details
 
         # Call the method
-        result = self.server._handle_describe_table(
-            {'keyspace': 'mykeyspace', 'table': 'users'}, self.mock_context
-        )
+        result = self.server._handle_describe_table('mykeyspace', 'users', self.mock_context)
 
         # Verify the result
         self.assertIn('## Table: `mykeyspace.users`', result)
@@ -428,9 +329,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.describe_table.return_value = table_details
 
         # Call the method
-        result = self.server._handle_describe_table(
-            {'keyspace': 'mykeyspace', 'table': 'users'}, self.mock_context
-        )
+        result = self.server._handle_describe_table('mykeyspace', 'users', self.mock_context)
 
         # Verify the result
         self.assertIn('## Table: `mykeyspace.users`', result)
@@ -446,20 +345,6 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         self.mock_schema_service.describe_table.assert_called_once_with('mykeyspace', 'users')
         self.mock_context.info.assert_called_once()
 
-    def test_handle_describe_table_missing_parameters(self):
-        """Test the _handle_describe_table method with missing parameters."""
-        # Test missing keyspace
-        with self.assertRaises(Exception) as context:
-            self.server._handle_describe_table({'table': 'users'}, self.mock_context)
-        self.assertIn('Keyspace name is required', str(context.exception))
-
-        # Test missing table
-        with self.assertRaises(Exception) as context:
-            self.server._handle_describe_table({'keyspace': 'mykeyspace'}, self.mock_context)
-        self.assertIn('Table name is required', str(context.exception))
-
-        self.mock_schema_service.describe_table.assert_not_called()
-
     def test_handle_describe_table_error(self):
         """Test the _handle_describe_table method with an error."""
         # Set up the mock
@@ -467,9 +352,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
-            self.server._handle_describe_table(
-                {'keyspace': 'mykeyspace', 'table': 'users'}, self.mock_context
-            )
+            self.server._handle_describe_table('mykeyspace', 'users', self.mock_context)
 
         self.assertIn('Error describing table', str(context.exception))
         self.mock_schema_service.describe_table.assert_called_once_with('mykeyspace', 'users')
@@ -486,7 +369,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method
         result = self.server._handle_execute_query(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}, self.mock_context
+            'mykeyspace', 'SELECT * FROM users', self.mock_context
         )
 
         # Verify the result
@@ -508,8 +391,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method
         result = self.server._handle_execute_query(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users WHERE id = 999'},
-            self.mock_context,
+            'mykeyspace', 'SELECT * FROM users WHERE id = 999', self.mock_context
         )
 
         # Verify the result
@@ -534,7 +416,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method
         result = self.server._handle_execute_query(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}, self.mock_context
+            'mykeyspace', 'SELECT * FROM users', self.mock_context
         )
 
         # Verify the result
@@ -547,29 +429,13 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         )
         self.mock_context.info.assert_called_once()
 
-    def test_handle_execute_query_missing_parameters(self):
-        """Test the _handle_execute_query method with missing parameters."""
-        # Test missing keyspace
-        with self.assertRaises(Exception) as context:
-            self.server._handle_execute_query({'query': 'SELECT * FROM users'}, self.mock_context)
-        self.assertIn('Keyspace name is required', str(context.exception))
-
-        # Test missing query
-        with self.assertRaises(Exception) as context:
-            self.server._handle_execute_query({'keyspace': 'mykeyspace'}, self.mock_context)
-        self.assertIn('Query is required', str(context.exception))
-
-        self.mock_data_service.execute_read_only_query.assert_not_called()
-
     def test_handle_execute_query_non_select(self):
         """Test the _handle_execute_query method with a non-SELECT query."""
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
             self.server._handle_execute_query(
-                {
-                    'keyspace': 'mykeyspace',
-                    'query': "INSERT INTO users (id, name) VALUES (1, 'test')",
-                },
+                'mykeyspace',
+                "INSERT INTO users (id, name) VALUES (1, 'test')",
                 self.mock_context,
             )
 
@@ -581,7 +447,8 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
             self.server._handle_execute_query(
-                {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users; DROP TABLE users;'},
+                'mykeyspace',
+                'SELECT * FROM users; DROP TABLE users;',
                 self.mock_context,
             )
 
@@ -596,7 +463,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
             self.server._handle_execute_query(
-                {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}, self.mock_context
+                'mykeyspace', 'SELECT * FROM users', self.mock_context
             )
 
         self.assertIn('Error executing query', str(context.exception))
@@ -618,7 +485,8 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method
         result = self.server._handle_analyze_query_performance(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users WHERE id = 1'},
+            'mykeyspace',
+            'SELECT * FROM users WHERE id = 1',
             self.mock_context,
         )
 
@@ -649,7 +517,8 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
 
         # Call the method
         result = self.server._handle_analyze_query_performance(
-            {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users WHERE id = 1'},
+            'mykeyspace',
+            'SELECT * FROM users WHERE id = 1',
             self.mock_context,
         )
 
@@ -665,24 +534,6 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         )
         self.mock_context.info.assert_called_once()
 
-    def test_handle_analyze_query_performance_missing_parameters(self):
-        """Test the _handle_analyze_query_performance method with missing parameters."""
-        # Test missing keyspace
-        with self.assertRaises(Exception) as context:
-            self.server._handle_analyze_query_performance(
-                {'query': 'SELECT * FROM users'}, self.mock_context
-            )
-        self.assertIn('Keyspace name is required', str(context.exception))
-
-        # Test missing query
-        with self.assertRaises(Exception) as context:
-            self.server._handle_analyze_query_performance(
-                {'keyspace': 'mykeyspace'}, self.mock_context
-            )
-        self.assertIn('Query is required', str(context.exception))
-
-        self.mock_query_analysis_service.analyze_query.assert_not_called()
-
     def test_handle_analyze_query_performance_error(self):
         """Test the _handle_analyze_query_performance method with an error."""
         # Set up the mock
@@ -691,7 +542,7 @@ class TestKeyspacesMcpStdioServer(unittest.TestCase):
         # Call the method and verify it raises an exception
         with self.assertRaises(Exception) as context:
             self.server._handle_analyze_query_performance(
-                {'keyspace': 'mykeyspace', 'query': 'SELECT * FROM users'}, self.mock_context
+                'mykeyspace', 'SELECT * FROM users', self.mock_context
             )
 
         self.assertIn('Error analyzing query', str(context.exception))
